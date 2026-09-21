@@ -27,6 +27,37 @@ const COLORS = {
   whatsapp: "#34d399",
 };
 
+const THEME = {
+  dark: {
+    title: "#e6efe9",
+    legend: "#8ba396",
+    tickX: "#8ba396",
+    tickY: "#617369",
+    gridY: "#1a2420",
+    borderX: "#22302a",
+  },
+  light: {
+    title: "#1a2620",
+    legend: "#33413a",
+    tickX: "#33413a",
+    tickY: "#4b5b53",
+    gridY: "#e2e8e4",
+    borderX: "#c9d3ce",
+  },
+};
+
+const whiteBackgroundPlugin = {
+  id: "whiteBackground",
+  beforeDraw: (chart) => {
+    const { ctx, width, height } = chart;
+    ctx.save();
+    ctx.globalCompositeOperation = "destination-over";
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, width, height);
+    ctx.restore();
+  },
+};
+
 const EXPORT_PER_DAY = 46;
 const EXPORT_MIN_WIDTH = 900;
 const EXPORT_HEIGHT = 560;
@@ -43,6 +74,7 @@ function buildConfig({ series, title, forExport }) {
   const labels = series.map((d) => [d.dayName, d.dateLabel]);
   const axisFontSize = forExport ? 13 : Math.max(9, Math.min(11, 900 / series.length / 4));
   const titleFontSize = forExport ? 17 : 14;
+  const c = forExport ? THEME.light : THEME.dark;
 
   return {
     type: "line",
@@ -90,7 +122,7 @@ function buildConfig({ series, title, forExport }) {
         title: {
           display: true,
           text: title,
-          color: "#e6efe9",
+          color: c.title,
           font: {
             family: "'JetBrains Mono', monospace",
             size: titleFontSize,
@@ -101,7 +133,7 @@ function buildConfig({ series, title, forExport }) {
         legend: {
           position: "bottom",
           labels: {
-            color: "#8ba396",
+            color: c.legend,
             usePointStyle: true,
             pointStyle: "circle",
             boxWidth: 7,
@@ -139,9 +171,9 @@ function buildConfig({ series, title, forExport }) {
       scales: {
         x: {
           grid: { display: false },
-          border: { color: "#22302a" },
+          border: { color: c.borderX },
           ticks: {
-            color: "#8ba396",
+            color: c.tickX,
             maxRotation: 0,
             minRotation: 0,
             autoSkip: !forExport,
@@ -154,10 +186,10 @@ function buildConfig({ series, title, forExport }) {
         },
         y: {
           beginAtZero: true,
-          grid: { color: "#1a2420" },
+          grid: { color: c.gridY },
           border: { display: false },
           ticks: {
-            color: "#617369",
+            color: c.tickY,
             font: {
               family: "'JetBrains Mono', monospace",
               size: forExport ? 12 : 10.5,
@@ -202,10 +234,10 @@ export default function ResponseTimeChart({ series, title }) {
     canvas.height = EXPORT_HEIGHT;
 
     if (exportChartRef.current) exportChartRef.current.destroy();
-    exportChartRef.current = new Chart(
-      canvas,
-      buildConfig({ series, title, forExport: true })
-    );
+    exportChartRef.current = new Chart(canvas, {
+      ...buildConfig({ series, title, forExport: true }),
+      plugins: [whiteBackgroundPlugin],
+    });
 
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
